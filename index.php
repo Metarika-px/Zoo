@@ -1,65 +1,126 @@
 <?php require __DIR__ . '/templates/header.php'; ?>
 
-<section class="hero hero-zoo">
+<div class="site-container">
+    <section class="hero hero-zoo section-padding">
     <div class="container">
         <?php show_flash(); ?>
+                <div class="hero-badge">
+                    🌿 Добро пожаловать в современный зоопарк
+                </div>
+        <div class="hero-wrapper">
+               
+            <div class="hero-left">
 
-        <div class="align-items-center d-flex">
-            <div class="">
-                <p class="text-accent fw-semibold hero-label">
-                    Добро пожаловать в зоопарк <span>🌿</span>
-                </p>
+               
 
                 <h1 class="hero-title">
-                    Удобный сервис для посещения современного <span>зоопарка</span>
+                    Погрузитесь в удивительный мир
+
+                    <span>животных и природы</span>
                 </h1>
 
-                <p class="lead text-secondary hero-text">
-                    Легко узнать время, цену и информацию о животных ближайших экскурсий.
+                <p class="hero-description">
+                    Покупайте билеты онлайн, узнавайте о животных,
+                    посещайте экскурсии и открывайте природу по-новому.
                 </p>
 
-                <div class="d-flex gap-3 flex-wrap">
-                    <a class="btn btn-accent btn-lg hero-btn" href="tickets.php">🎟 Купить билет</a>
-                    <a class="btn btn-outline-light btn-lg hero-btn" href="animals.php">👁 Смотреть животных</a>
+                <div class="hero-actions">
+                    <a class="btn btn-accent btn-lg hero-btn" href="tickets.php">
+                        Купить билет
+                    </a>
+
+                    <a class="btn btn-outline-light btn-lg hero-btn" href="animals.php">
+                        Смотреть животных
+                    </a>
                 </div>
+
+              
+
             </div>
 
-            <div class="">
-                <div class="hero-visual">
-                    <img class="hero-animal" src="<?= BASE_URL ?>/assets/images/red-panda.png" alt="Красная панда">
+            <div class="hero-right">
+
+                <div class="hero-image-wrapper">
+  <img
+                        class="hero-animal"
+                        src="<?= BASE_URL ?>/assets/images/red-panda.png"
+                        alt="Красная панда"
+                    >
+                    <div class="hero-glow"></div>
+
+                  
 
                     <div class="metric-grid hero-metrics">
+
                         <?php
                         $stats = [
-                            ['Животных', db()->query('SELECT COUNT(*) FROM animals WHERE is_active=1')->fetchColumn(), '🐾', 'Уникальные виды со всего мира'],
-                            ['Вольеров', db()->query('SELECT COUNT(*) FROM enclosures')->fetchColumn(), '🏠', 'Комфортные условия для питомцев'],
-                            ['Экскурсий', db()->query('SELECT COUNT(*) FROM excursions WHERE is_active=1')->fetchColumn(), '🧍', 'Увлекательные маршруты для всей семьи'],
-                            ['Типов билетов', db()->query('SELECT COUNT(*) FROM ticket_types')->fetchColumn(), '🎫', 'Выберите подходящий вариант'],
+                            [
+                                'Животных',
+                                db()->query('SELECT COUNT(*) FROM animals WHERE is_active=1')->fetchColumn(),
+                                '<img src="assets/images/lapa.png" alt="paw" width="60" height="60">'
+                            ],
+
+                            [
+                                'Вольеров',
+                                db()->query('SELECT COUNT(*) FROM enclosures')->fetchColumn(),
+                                '<img src="assets/images/home.png" alt="home" width="60" height="60">'
+                            ],
+
+                            [
+                                'Экскурсий',
+                                db()->query('SELECT COUNT(*) FROM excursions WHERE is_active=1')->fetchColumn(),
+                                '<img src="assets/images/men.png" alt="excursion" width="60" height="60">'
+                            ],
+
+                            [
+                                'Билетов',
+                                db()->query('SELECT COUNT(*) FROM ticket_types')->fetchColumn(),
+                                '<img src="assets/images/ticket.png" alt="ticket" width="60" height="60">'
+                            ],
                         ];
 
                         foreach ($stats as $stat): ?>
+
                             <div class="metric-card">
                                 <div class="metric-icon"><?= $stat[2] ?></div>
+
                                 <span><?= e((string)$stat[1]) ?></span>
+
                                 <small><?= e($stat[0]) ?></small>
-                                <p><?= e($stat[3]) ?></p>
                             </div>
+
                         <?php endforeach; ?>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+          <div class="hero-benefits">
+                    <div>
+                        <img src="<?= BASE_URL ?>/assets/images/shield-icon.png" alt="">
+                        <strong> Безопасно</strong>
+                        <span>Надежная онлайн-оплата</span>
+                    </div>
+
+                    <div>
+                          <img src="<?= BASE_URL ?>/assets/images/time-icon.png" alt="">
+                        <strong>🕒 Удобно</strong>
+                        <span>Покупка билетов за минуту</span>
+                    </div>
+
+                    <div>
+                          <img src="<?= BASE_URL ?>/assets/images/live-icon.png" alt="">
+                        <strong>💚 С заботой</strong>
+                        <span>Комфорт животных — наш приоритет</span>
                     </div>
                 </div>
-            </div>
-        </div>
-
-        <div class="hero-benefits">
-            <div>🛡 <strong>Безопасно</strong><span>Надежная онлайн-оплата</span></div>
-            <div>🕒 <strong>Удобно</strong><span>Покупка билетов в пару кликов</span></div>
-            <div>📅 <strong>Актуально</strong><span>Расписание экскурсий и мероприятий</span></div>
-            <div>💚 <strong>С заботой</strong><span>Мы заботимся о животных и природе</span></div>
-        </div>
-    </div>
+             </div>
 </section>
 
-<section class="container py-5">
+<section class="container py-5 section-padding">
     <h2 class="section-title">Ближайшие экскурсии</h2>
     <div class="row g-3">
         <?php foreach (db()->query('SELECT * FROM view_excursions_full WHERE is_active=1 ORDER BY start_time LIMIT 3') as $ex): ?>
@@ -73,5 +134,7 @@
         <?php endforeach; ?>
     </div>
 </section>
+</div>
+
 
 <?php require __DIR__ . '/templates/footer.php'; ?>
