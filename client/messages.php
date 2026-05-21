@@ -10,7 +10,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 require __DIR__ . '/../templates/header.php';
 ?>
 <section class="container py-5">
-    <?php show_flash(); ?>
+    
+    <?php require __DIR__ . '/../templates/client_nav.php'; ?>
+
+    <?php require __DIR__ . '/../templates/client_back.php'; ?>
+<?php show_flash(); ?>
     <h1 class="section-title">Сообщение администрации</h1>
     <form method="post" class="app-panel">
         <textarea class="form-control mb-3" name="message" rows="6" required></textarea>

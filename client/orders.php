@@ -7,7 +7,11 @@ $stmt->execute([$user['id']]);
 require __DIR__ . '/../templates/header.php';
 ?>
 <section class="container py-5">
-    <?php show_flash(); ?>
+    
+    <?php require __DIR__ . '/../templates/client_nav.php'; ?>
+
+    <?php require __DIR__ . '/../templates/client_back.php'; ?>
+<?php show_flash(); ?>
     <h1 class="section-title">Мои билеты</h1>
     <div class="table-responsive"><table class="table table-dark table-hover">
         <tr><th>Заказ</th><th>Дата посещения</th><th>Сумма</th><th>Статус</th><th>Создан</th></tr>
