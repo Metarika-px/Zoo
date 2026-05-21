@@ -2,11 +2,8 @@
 require __DIR__ . '/../includes/functions.php';
 require_role('Сотрудник');
 $user = current_user();
-$stmt = db()->prepare('SELECT id FROM employees WHERE user_id=?');
-$stmt->execute([$user['id']]);
-$employeeId = (int)$stmt->fetchColumn();
-$stmt = db()->prepare('SELECT animal_name, responsibility, assigned_at FROM view_animal_responsibilities WHERE employee_id = ? ORDER BY animal_name');
-$stmt->execute([$employeeId]);
+$stmt = db()->prepare('SELECT animal_name, responsibility, assigned_at FROM view_animal_responsibilities WHERE employee_name = ? ORDER BY animal_name');
+$stmt->execute([$user['full_name']]);
 require __DIR__ . '/../templates/header.php';
 ?>
 <section class="container py-5">
