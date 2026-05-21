@@ -1,7 +1,0 @@
-Options -Indexes
-DirectoryIndex index.php
-
-<IfModule mod_rewrite.c>
-RewriteEngine On
-</IfModule>
-
