@@ -22,6 +22,14 @@ function role_name_by_id(PDO $pdo, int $id): ?string
     return $name === false ? null : (string)$name;
 }
 
+function user_role_name(PDO $pdo, int $userId): ?string
+{
+    $stmt = $pdo->prepare('SELECT r.name FROM users u JOIN roles r ON r.id = u.role_id WHERE u.id = ?');
+    $stmt->execute([$userId]);
+    $name = $stmt->fetchColumn();
+    return $name === false ? null : (string)$name;
+}
+
 function director_count(PDO $pdo, ?int $excludeUserId = null): int
 {
     $directorRoleId = role_id_by_name($pdo, 'Директор');
@@ -40,8 +48,22 @@ function director_count(PDO $pdo, ?int $excludeUserId = null): int
     return (int)$stmt->fetchColumn();
 }
 
+function ensure_admin_can_touch_user(PDO $pdo, int $userId, bool $isDirector): void
+{
+    if ($userId <= 0 || $isDirector) {
+        return;
+    }
+
+    $targetRole = user_role_name($pdo, $userId);
+    if ($targetRole === 'Директор' || $targetRole === 'Администратор') {
+        throw new RuntimeException('Администратор не может изменять аккаунты директора и администраторов.');
+    }
+}
+
 function validate_user_role(PDO $pdo, int $roleId, int $userId, bool $isDirector): void
 {
+    ensure_admin_can_touch_user($pdo, $userId, $isDirector);
+
     $roleName = role_name_by_id($pdo, $roleId);
     if (!$roleName) {
         throw new RuntimeException('Выбрана несуществующая роль.');
@@ -88,32 +110,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 if (isset($_GET['delete'])) {
-    $deleteId = (int)$_GET['delete'];
-    if ($deleteId === (int)($_SESSION['user_id'] ?? 0)) {
-        flash('danger', 'Нельзя удалить текущую учетную запись.');
-        redirect('/admin/users.php');
-    }
+    try {
+        $deleteId = (int)$_GET['delete'];
+        if ($deleteId === (int)($_SESSION['user_id'] ?? 0)) {
+            throw new RuntimeException('Нельзя удалить текущую учетную запись.');
+        }
 
-    $stmt = $pdo->prepare('SELECT r.name FROM users u JOIN roles r ON r.id = u.role_id WHERE u.id = ?');
-    $stmt->execute([$deleteId]);
-    $deleteRole = $stmt->fetchColumn();
-    if ($deleteRole === 'Директор' && director_count($pdo, $deleteId) === 0) {
-        flash('danger', 'Нельзя удалить единственный аккаунт директора.');
-        redirect('/admin/users.php');
-    }
+        ensure_admin_can_touch_user($pdo, $deleteId, $isDirector);
 
-    $stmt = $pdo->prepare('CALL delete_user_with_relations(?)');
-    $stmt->execute([$deleteId]);
-    $stmt->closeCursor();
-    flash('success', 'Пользователь и связанные данные удалены вручную через процедуру.');
+        if (user_role_name($pdo, $deleteId) === 'Директор' && director_count($pdo, $deleteId) === 0) {
+            throw new RuntimeException('Нельзя удалить единственный аккаунт директора.');
+        }
+
+        $stmt = $pdo->prepare('CALL delete_user_with_relations(?)');
+        $stmt->execute([$deleteId]);
+        $stmt->closeCursor();
+        flash('success', 'Пользователь и связанные данные удалены вручную через процедуру.');
+    } catch (Throwable $e) {
+        flash('danger', $e->getMessage());
+    }
     redirect('/admin/users.php');
 }
 
 $edit = null;
 if (isset($_GET['edit'])) {
-    $stmt = $pdo->prepare('SELECT * FROM users WHERE id=?');
-    $stmt->execute([(int)$_GET['edit']]);
-    $edit = $stmt->fetch();
+    try {
+        $editId = (int)$_GET['edit'];
+        ensure_admin_can_touch_user($pdo, $editId, $isDirector);
+        $stmt = $pdo->prepare('SELECT * FROM users WHERE id=?');
+        $stmt->execute([$editId]);
+        $edit = $stmt->fetch();
+    } catch (Throwable $e) {
+        flash('danger', $e->getMessage());
+        redirect('/admin/users.php');
+    }
 }
 
 $rolesStmt = $pdo->prepare("SELECT * FROM roles WHERE name NOT IN ('Гость', 'Сотрудник') ORDER BY id");
@@ -156,11 +186,13 @@ require __DIR__ . '/../templates/header.php';
             <button class="btn btn-accent mt-3">Сохранить</button>
         </form>
 
-        <div class="alert alert-info">Сотрудники создаются через отдельный раздел "Сотрудники". Аккаунт директора в системе может быть только один.</div>
+        <div class="alert alert-info">Сотрудники создаются через отдельный раздел "Сотрудники". Администратор не может изменять аккаунты директора и администраторов.</div>
 
         <div class="table-responsive"><table class="table table-dark table-hover">
             <tr><th>ID</th><th>Роль</th><th>Логин</th><th>ФИО</th><th>Email</th><th></th></tr>
             <?php foreach ($users as $u): ?>
+                <?php $isProtectedAdminRow = in_array($u['role_name'], ['Директор', 'Администратор'], true); ?>
+                <?php $adminLockedDirector = !$isDirector && $isProtectedAdminRow; ?>
                 <tr>
                     <td><?= $u['id'] ?></td>
                     <td><?= e($u['role_name']) ?></td>
@@ -168,8 +200,12 @@ require __DIR__ . '/../templates/header.php';
                     <td><?= e($u['full_name']) ?></td>
                     <td><?= e($u['email']) ?></td>
                     <td>
-                        <a class="btn btn-sm btn-outline-light" href="?edit=<?= $u['id'] ?>">Редактировать</a>
-                        <a class="btn btn-sm btn-outline-danger js-confirm" href="?delete=<?= $u['id'] ?>">Удалить</a>
+                        <?php if ($adminLockedDirector): ?>
+                            <span class="badge text-bg-secondary">Только директор</span>
+                        <?php else: ?>
+                            <a class="btn btn-sm btn-outline-light" href="?edit=<?= $u['id'] ?>">Редактировать</a>
+                            <a class="btn btn-sm btn-outline-danger js-confirm" href="?delete=<?= $u['id'] ?>">Удалить</a>
+                        <?php endif; ?>
                     </td>
                 </tr>
             <?php endforeach; ?>

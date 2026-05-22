@@ -1,6 +1,30 @@
 CREATE DATABASE IF NOT EXISTS zoo_course CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE zoo_course;
 
+DROP VIEW IF EXISTS view_dashboard_counts;
+DROP VIEW IF EXISTS view_stats_excursion_popularity;
+DROP VIEW IF EXISTS view_stats_ticket_sales;
+DROP VIEW IF EXISTS view_stats_animals_by_type;
+DROP VIEW IF EXISTS view_users_full;
+DROP VIEW IF EXISTS view_excursions_full;
+DROP VIEW IF EXISTS view_animal_responsibilities;
+DROP VIEW IF EXISTS view_tickets_full;
+DROP VIEW IF EXISTS view_employees_full;
+DROP VIEW IF EXISTS view_animals_full;
+
+DROP FUNCTION IF EXISTS calculate_ticket_total;
+DROP FUNCTION IF EXISTS get_animal_age;
+DROP FUNCTION IF EXISTS count_animals_in_enclosure;
+
+DROP PROCEDURE IF EXISTS add_animal;
+DROP PROCEDURE IF EXISTS update_animal;
+DROP PROCEDURE IF EXISTS delete_animal_with_relations;
+DROP PROCEDURE IF EXISTS buy_ticket;
+DROP PROCEDURE IF EXISTS assign_employee_to_animal;
+DROP PROCEDURE IF EXISTS create_excursion;
+DROP PROCEDURE IF EXISTS delete_employee_with_relations;
+DROP PROCEDURE IF EXISTS delete_user_with_relations;
+
 DROP TABLE IF EXISTS ticket_order_items, ticket_orders, animal_employee, employee_positions, excursions, animals, species, animal_types, enclosures, employees, positions, users, roles;
 
 CREATE TABLE roles (
@@ -150,26 +174,31 @@ INSERT INTO users (role_id, login, password, full_name, email, phone) VALUES
 (3, 'keeper', '12345', 'Мария Соколова', 'keeper@example.com', '+79990000002'),
 (4, 'admin', 'admin', 'Администратор Системы', 'admin@example.com', '+79990000003'),
 (5, 'director', 'director', 'Елена Орлова', 'director@example.com', '+79990000004');
+
 INSERT INTO animal_types (name) VALUES ('Млекопитающие'), ('Птицы'), ('Рептилии');
 INSERT INTO species (animal_type_id, name, description) VALUES
 (1, 'Амурский тигр', 'Крупная кошка Дальнего Востока.'),
 (1, 'Азиатский слон', 'Социальное травоядное животное.'),
 (2, 'Фламинго', 'Птица с ярким оперением.'),
 (3, 'Игуана', 'Тропическая ящерица.');
+
 INSERT INTO enclosures (name, location, area, climate_zone, capacity) VALUES
 ('Таежный сектор', 'Северная аллея', 750.00, 'Умеренный', 4),
 ('Слоновник', 'Центральная зона', 1200.00, 'Теплый', 3),
 ('Птичий пруд', 'Восточная зона', 430.00, 'Влажный', 25),
 ('Террариум', 'Павильон 2', 80.00, 'Тропический', 12);
+
 INSERT INTO animals (species_id, enclosure_id, name, gender, birth_date, arrival_date, description, photo, is_active) VALUES
 (1, 1, 'Байкал', 'male', '2018-04-12', '2020-06-01', 'Спокойный тигр, любит водоем.', NULL, 1),
 (2, 2, 'Гая', 'female', '2012-09-03', '2019-05-10', 'Самка азиатского слона.', NULL, 1),
 (3, 3, 'Роза', 'female', '2021-03-22', '2022-07-14', 'Фламинго из большой стаи.', NULL, 1),
 (4, 4, 'Изумруд', 'unknown', '2020-01-15', '2021-08-20', 'Зеленая игуана.', NULL, 1);
+
 INSERT INTO positions (name, description) VALUES
 ('Кипер', 'Уход за животными и кормление.'),
 ('Ветеринар', 'Контроль здоровья животных.'),
 ('Экскурсовод', 'Проведение экскурсий.');
+
 INSERT INTO employees (user_id, birth_date, gender, passport_series, passport_number, address, education, work_experience, medical_book_number, medical_book_expire_date, hire_date, is_active) VALUES
 (2, '1992-05-18', 'female', '4512', '123456', 'Москва', 'Биологическое', '7 лет работы с животными', 'МК-1001', '2027-01-01', '2021-02-10', 1);
 INSERT INTO employee_positions (employee_id, position_id, salary_rate, date_from, is_active) VALUES
@@ -178,6 +207,7 @@ INSERT INTO employee_positions (employee_id, position_id, salary_rate, date_from
 INSERT INTO animal_employee (animal_id, employee_id, responsibility, assigned_at) VALUES
 (1, 1, 'Кормление и наблюдение', '2023-01-10'),
 (2, 1, 'Утренний осмотр', '2023-02-15');
+
 INSERT INTO ticket_types (name, price, description) VALUES
 ('Взрослый', 900.00, 'Посетитель старше 18 лет'),
 ('Детский', 450.00, 'Дети от 7 до 17 лет'),
@@ -186,6 +216,7 @@ INSERT INTO ticket_orders (user_id, visit_date, total_price, status) VALUES (1, 
 INSERT INTO ticket_order_items (order_id, ticket_type_id, quantity, price_at_purchase, subtotal) VALUES
 (1, 1, 1, 900.00, 900.00),
 (1, 2, 1, 450.00, 450.00);
+
 INSERT INTO excursions (employee_id, title, description, start_time, duration_minutes, max_people, price, is_active) VALUES
 (1, 'Хищники зоопарка', 'Маршрут по сектору крупных кошек.', DATE_ADD(NOW(), INTERVAL 2 DAY), 60, 15, 600.00, 1),
 (1, 'Тропический павильон', 'Знакомство с рептилиями и птицами.', DATE_ADD(NOW(), INTERVAL 5 DAY), 45, 12, 450.00, 1);
@@ -216,7 +247,7 @@ JOIN ticket_order_items i ON i.order_id = o.id
 JOIN ticket_types tt ON tt.id = i.ticket_type_id;
 
 CREATE OR REPLACE VIEW view_animal_responsibilities AS
-SELECT ae.id, a.name AS animal_name, u.full_name AS employee_name, ae.responsibility, ae.assigned_at
+SELECT ae.id, ae.animal_id, ae.employee_id, a.name AS animal_name, u.full_name AS employee_name, ae.responsibility, ae.assigned_at
 FROM animal_employee ae
 JOIN animals a ON a.id = ae.animal_id
 JOIN employees e ON e.id = ae.employee_id
@@ -227,6 +258,35 @@ SELECT ex.*, u.full_name AS employee_name
 FROM excursions ex
 JOIN employees e ON e.id = ex.employee_id
 JOIN users u ON u.id = e.user_id;
+
+CREATE OR REPLACE VIEW view_users_full AS
+SELECT u.*, r.name AS role_name
+FROM users u
+JOIN roles r ON r.id = u.role_id;
+
+CREATE OR REPLACE VIEW view_stats_animals_by_type AS
+SELECT animal_type_name AS label, COUNT(*) AS total
+FROM view_animals_full
+WHERE is_active = 1
+GROUP BY animal_type_name;
+
+CREATE OR REPLACE VIEW view_stats_ticket_sales AS
+SELECT DATE(created_at) AS label, SUM(total_price) AS total
+FROM ticket_orders
+GROUP BY DATE(created_at)
+ORDER BY label;
+
+CREATE OR REPLACE VIEW view_stats_excursion_popularity AS
+SELECT title AS label, max_people AS total
+FROM excursions
+WHERE is_active = 1
+ORDER BY max_people DESC;
+
+CREATE OR REPLACE VIEW view_dashboard_counts AS
+SELECT 'users' AS metric, COUNT(*) AS total FROM users
+UNION ALL SELECT 'animals', COUNT(*) FROM animals
+UNION ALL SELECT 'employees', COUNT(*) FROM employees
+UNION ALL SELECT 'ticket_sales', COALESCE(SUM(total_price), 0) FROM ticket_orders;
 
 DELIMITER //
 CREATE FUNCTION calculate_ticket_total(orderId INT) RETURNS DECIMAL(10,2)
@@ -288,53 +348,6 @@ BEGIN
     INSERT INTO excursions (employee_id, title, description, start_time, duration_minutes, max_people, price, is_active)
     VALUES (p_employee_id, p_title, p_description, p_start_time, p_duration, p_max_people, p_price, 1);
 END//
-DELIMITER ;
-
-
-/* =========================
-   ДОПОЛНИТЕЛЬНЫЕ ПРЕДСТАВЛЕНИЯ ДЛЯ ОТЧЕТОВ И СЛУЖЕБНЫХ СПИСКОВ
-   ========================= */
-
-CREATE OR REPLACE VIEW view_users_full AS
-SELECT u.*, r.name AS role_name
-FROM users u
-JOIN roles r ON r.id = u.role_id;
-
-CREATE OR REPLACE VIEW view_stats_animals_by_type AS
-SELECT animal_type_name AS label, COUNT(*) AS total
-FROM view_animals_full
-WHERE is_active = 1
-GROUP BY animal_type_name;
-
-CREATE OR REPLACE VIEW view_stats_ticket_sales AS
-SELECT DATE(created_at) AS label, SUM(total_price) AS total
-FROM ticket_orders
-GROUP BY DATE(created_at)
-ORDER BY label;
-
-CREATE OR REPLACE VIEW view_stats_excursion_popularity AS
-SELECT title AS label, max_people AS total
-FROM excursions
-WHERE is_active = 1
-ORDER BY max_people DESC;
-
-CREATE OR REPLACE VIEW view_dashboard_counts AS
-SELECT 'users' AS metric, COUNT(*) AS total FROM users
-UNION ALL SELECT 'animals', COUNT(*) FROM animals
-UNION ALL SELECT 'employees', COUNT(*) FROM employees
-UNION ALL SELECT 'ticket_sales', COALESCE(SUM(total_price), 0) FROM ticket_orders;
-
-CREATE OR REPLACE VIEW view_animal_responsibilities AS
-SELECT ae.id, ae.animal_id, ae.employee_id, a.name AS animal_name, u.full_name AS employee_name, ae.responsibility, ae.assigned_at
-FROM animal_employee ae
-JOIN animals a ON a.id = ae.animal_id
-JOIN employees e ON e.id = ae.employee_id
-JOIN users u ON u.id = e.user_id;
-
-DROP PROCEDURE IF EXISTS delete_employee_with_relations;
-DROP PROCEDURE IF EXISTS delete_user_with_relations;
-
-DELIMITER //
 
 CREATE PROCEDURE delete_employee_with_relations(IN p_employee_id INT)
 BEGIN
@@ -365,5 +378,4 @@ BEGIN
     DELETE FROM ticket_orders WHERE user_id = p_user_id;
     DELETE FROM users WHERE id = p_user_id;
 END//
-
 DELIMITER ;

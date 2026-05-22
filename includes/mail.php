@@ -11,7 +11,7 @@ function mail_template(string $title, string $body): string
         . '<div style="background:#101826;border:1px solid #263244;border-radius:8px;padding:24px;">'
         . '<h1 style="margin:0 0 16px;color:#19c37d;font-size:24px;">' . e($title) . '</h1>'
         . '<div style="font-size:16px;line-height:1.6;color:#f8fafc;">' . $body . '</div>'
-        . '<p style="margin-top:24px;color:#9aa7b8;font-size:13px;">' . e(APP_NAME) . ' — учебная информационная система</p>'
+        . '<p style="margin-top:24px;color:#9aa7b8;font-size:13px;">' . e(APP_NAME) . ' — Ваш любимый и не повторимый</p>'
         . '</div></div></body></html>';
 }
 
