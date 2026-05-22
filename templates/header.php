@@ -29,9 +29,15 @@ $user = current_user();
             </ul>
             <ul class="navbar-nav">
                 <?php if ($user): ?>
-                    <?php if (has_role(['Администратор', 'Директор'])): ?><li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>/admin/index.php">Админка</a></li><?php endif; ?>
-                    <?php if (has_role('Клиент')): ?><li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>/client/index.php">Кабинет</a></li><?php endif; ?>
-                    <?php if (has_role('Сотрудник')): ?><li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>/employee/index.php">Сотрудник</a></li><?php endif; ?>
+                    <?php if (has_role(['Администратор', 'Директор'])): ?>
+                        <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>/admin/index.php">Панель управления</a></li>
+                    <?php endif; ?>
+                    <?php if (has_role('Клиент')): ?>
+                        <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>/client/index.php">Личный кабинет</a></li>
+                    <?php endif; ?>
+                    <?php if (has_role('Сотрудник')): ?>
+                        <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>/employee/index.php">Панель сотрудника</a></li>
+                    <?php endif; ?>
                     <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>/logout.php">Выход</a></li>
                 <?php else: ?>
                     <li class="nav-item"><a class="nav-link" href="<?= BASE_URL ?>/login.php">Вход</a></li>
@@ -42,4 +48,3 @@ $user = current_user();
     </div>
 </header>
 <main>
-
