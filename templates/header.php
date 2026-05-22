@@ -14,7 +14,7 @@ $user = current_user();
 <body>
 <header class="navbar navbar-expand-lg navbar-dark app-header sticky-top">
     <div class="container">
-        <a class="navbar-brand fw-bold" href="<?= BASE_URL ?>/index.php">Зоопарк</a>
+        <a class="navbar-brand fw-bold" href="<?= BASE_URL ?>/index.php"><img src="<?= BASE_URL ?>/assets/images/logo2.png" alt="" class="logo"></a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
             <span class="navbar-toggler-icon"></span>
         </button>
